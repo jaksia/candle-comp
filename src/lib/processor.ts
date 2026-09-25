@@ -135,7 +135,8 @@ export function toUrlHash(timetables: Timetable[]): string {
 		const typeHash = typeHashNames[timetable.type];
 		const nameHash = encodeURIComponent(timetable.name);
 		const colorHash = encodeURIComponent(timetable.color.replace('#', ''));
-		return `${typeHash}:${nameHash}:${colorHash}`;
+		const activeHash = timetable.options.active ? '1' : '0';
+		return `${typeHash}:${nameHash}:${colorHash}:${activeHash}`;
 	});
 	return hashParts.join(',');
 }
@@ -146,7 +147,7 @@ export function fromUrlHash(hash: string): Timetable[] {
 	const timetables: Timetable[] = [];
 
 	for (const part of hashParts) {
-		const [typeHash, nameHash, colorHash] = part.split(':');
+		const [typeHash, nameHash, colorHash, activeHash] = part.split(':');
 		const type = Object.entries(typeHashNames).find(([, v]) => v === typeHash)?.[0] as
 			TimetableType | undefined;
 		if (!type) {
@@ -158,7 +159,7 @@ export function fromUrlHash(hash: string): Timetable[] {
 			type,
 			name,
 			color: `#${decodeURIComponent(colorHash)}`,
-			options: { active: true }
+			options: { active: activeHash === '1' || activeHash === undefined }
 		});
 	}
 
