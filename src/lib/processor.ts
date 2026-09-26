@@ -1,5 +1,6 @@
 import {
 	BlockStartTimes,
+	type CalculatedBlock,
 	type CalculatedDay,
 	type CalculatedTimetable,
 	type CandleLesson,
@@ -49,9 +50,9 @@ function hashString(str: string, seed = 0) {
 	return 4294967296 * (2097151 & h2) + (h1 >>> 0);
 }
 
-function getBlockId(timetableName: string, lesson: CandleLesson): string {
+function getBlockId(lesson: CandleLesson): string {
 	return hashString(
-		`${timetableName}-${lesson.subject}-${lesson.room}-${lesson.start}-${lesson.end}`
+		`${lesson.subjectCode}-${lesson.type}-${lesson.room}-${lesson.day}-${lesson.start}-${lesson.end}`
 	).toString();
 }
 
@@ -79,8 +80,8 @@ export function processTimetables(
 			}
 
 			day.times[blockStartTime].push({
-				id: getBlockId(`${metadata.type}/${metadata.name}`, lesson),
-				timetableName: `${metadata.type}/${metadata.name}`,
+				id: getBlockId(lesson),
+				timetables: [`${metadata.type}/${metadata.name}`],
 				name: lesson.subject,
 				room: lesson.room,
 				type: lesson.type,
@@ -89,6 +90,20 @@ export function processTimetables(
 				widthFraction: -1,
 				rowPosition: -1
 			});
+		}
+	}
+
+	for (const day of Object.values(calculatedTimetable.days)) {
+		for (const lessons of Object.values(day.times)) {
+			const mergedLessons: Record<string, CalculatedBlock> = {};
+			for (const lesson of lessons) {
+				if (mergedLessons[lesson.id]) {
+					mergedLessons[lesson.id].timetables.push(...lesson.timetables);
+				} else {
+					mergedLessons[lesson.id] = { ...lesson };
+				}
+			}
+			lessons.splice(0, lessons.length, ...Object.values(mergedLessons));
 		}
 	}
 

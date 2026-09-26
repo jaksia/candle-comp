@@ -60,8 +60,8 @@ export enum BlockStartTimes {
 }
 
 export type CalculatedBlock = {
-	timetableName: FullTimetableName;
 	id: string;
+	timetables: FullTimetableName[];
 
 	name: string;
 	room: string;

@@ -63,7 +63,7 @@
 		</div>
 	{/each}
 
-	{#each Array.from( { length: (DAYS.length * Object.values(BlockStartTimes).length) / 2 } ) as _, i (i)}
+	{#each { length: (DAYS.length * Object.values(BlockStartTimes).length) / 2 }, i (i)}
 		{const day = (i % DAYS.length) as WeekDay,
 			blockStr = Object.values(BlockStartTimes)[Math.floor(i / DAYS.length)],
 			block = BlockStartTimes[blockStr as keyof typeof BlockStartTimes],
@@ -75,11 +75,27 @@
 			]}
 		>
 			{#each calculatedTimetable?.days[day].times[block] as subject (subject.id)}
+				{const bgGradient = $derived.by(() => {
+					const timetableColors = subject.timetables.map((t) => scheduleColors.get(t));
+					if (timetableColors.length === 0) return 'transparent';
+					if (timetableColors.length === 1) {
+						return timetableColors[0];
+					} else {
+						const stripeWidthPx = 8;
+						const gradientStops = timetableColors
+							.flatMap((color, index) => {
+								const start = index * stripeWidthPx;
+								const end = (index + 1) * stripeWidthPx;
+								return [`${color} ${start}px`, `${color} ${end}px`];
+							})
+							.join(', ');
+
+						return `repeating-linear-gradient(45deg, ${gradientStops})`;
+					}
+				})}
 				<div
 					class="lesson rounded-lg text-xs text-white"
-					style="--color: {scheduleColors.get(
-						subject.timetableName
-					)}; --width-fraction: {subject.widthFraction}; --row-offset: {subject.rowPosition}; --block-count: {subject.blockCount};"
+					style="background: {bgGradient}; --width-fraction: {subject.widthFraction}; --row-offset: {subject.rowPosition}; --block-count: {subject.blockCount};"
 				>
 					<div class="absolute top-1 left-1 text-xs">
 						{subject.room}
