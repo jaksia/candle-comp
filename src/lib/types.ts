@@ -60,11 +60,12 @@ export enum BlockStartTimes {
 }
 
 export type CalculatedBlock = {
+	timetableName: FullTimetableName;
 	id: string;
+
 	name: string;
 	room: string;
 	type: CandleLessonType;
-	color: ColorString;
 
 	start: CandleLessonTime;
 	blockCount: number;
@@ -84,3 +85,5 @@ export type CalculatedTimetable = {
 		[key in WeekDay]: CalculatedDay;
 	};
 };
+
+export type FullTimetableName = `${TimetableType}/${string}`;

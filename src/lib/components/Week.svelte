@@ -3,15 +3,21 @@
 		BlockStartTimes,
 		WeekDay,
 		type CalculatedTimetable,
-		type CandleLessonType
+		type CandleLessonType,
+		type ColorString,
+		type FullTimetableName,
+		type Timetable
 	} from '$lib/types';
+	import { SvelteMap } from 'svelte/reactivity';
 
 	const DAYS = ['Pondelok', 'Utorok', 'Streda', 'Štvrtok', 'Piatok'];
 
 	let {
-		calculatedTimetable
+		calculatedTimetable,
+		schedules = []
 	}: {
 		calculatedTimetable?: CalculatedTimetable;
+		schedules?: Timetable[];
 	} = $props();
 
 	const lessonTypeColors: Record<CandleLessonType, string> = {
@@ -23,6 +29,14 @@
 		Seminár: '#800066',
 		Výskum: '#008066'
 	};
+
+	const scheduleColors = $derived.by(() => {
+		const map = new SvelteMap<FullTimetableName, ColorString>();
+		for (const schedule of schedules) {
+			map.set(`${schedule.type}/${schedule.name}`, schedule.color);
+		}
+		return map;
+	});
 </script>
 
 <div
@@ -63,7 +77,9 @@
 			{#each calculatedTimetable?.days[day].times[block] as subject (subject.id)}
 				<div
 					class="lesson rounded-lg text-xs text-white"
-					style="--color: {subject.color}; --width-fraction: {subject.widthFraction}; --row-offset: {subject.rowPosition}; --block-count: {subject.blockCount};"
+					style="--color: {scheduleColors.get(
+						subject.timetableName
+					)}; --width-fraction: {subject.widthFraction}; --row-offset: {subject.rowPosition}; --block-count: {subject.blockCount};"
 				>
 					<div class="absolute top-1 left-1 text-xs">
 						{subject.room}

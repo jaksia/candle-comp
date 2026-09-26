@@ -2,6 +2,8 @@
 	import type { Timetable } from '$lib/types';
 	import Icon from '@iconify/svelte';
 	import ToggleButton from './ToggleButton.svelte';
+	import ColorPicker from 'svelte-awesome-color-picker';
+	import { DEFAULT_COLORS } from '../../routes/+page.svelte';
 
 	let {
 		schedule = $bindable(),
@@ -14,7 +16,10 @@
 
 <div class="rounded border-2 border-gray-700 p-3">
 	<div class="mb-3 flex items-center gap-2">
-		<div class="h-5 w-5 rounded-full" style="background-color: {schedule.color}"></div>
+		<div class="cp-dark">
+			<ColorPicker bind:hex={schedule.color} swatches={DEFAULT_COLORS} label="" />
+		</div>
+
 		<h3 class="font-bold text-white">{schedule.type}/{schedule.name}</h3>
 
 		<button onclick={ondelete} class="ml-auto cursor-pointer text-white hover:text-red-500">
@@ -31,3 +36,14 @@
 		</div>
 	{/if}
 </div>
+
+<style>
+	.cp-dark {
+		--cp-bg-color: var(--color-gray-900);
+		--cp-border-color: var(--color-gray-700);
+		--cp-text-color: var(--color-white);
+		--cp-input-color: var(--color-gray-900);
+		--cp-button-hover-color: var(--color-gray-700);
+		z-index: 50;
+	}
+</style>

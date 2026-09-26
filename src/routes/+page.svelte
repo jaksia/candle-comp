@@ -1,3 +1,15 @@
+<script lang="ts" module>
+	export const DEFAULT_COLORS: ColorString[] = [
+		'#3771c8',
+		'#aa8800',
+		'#338000',
+		'#800066',
+		'#008066',
+		'#666666',
+		'#800000'
+	];
+</script>
+
 <script lang="ts">
 	import { page } from '$app/state';
 	import AddOverlay from '$lib/components/AddOverlay.svelte';
@@ -8,19 +20,11 @@
 	import type { CalculatedTimetable, CandleTimetable, ColorString, Timetable } from '$lib/types';
 	import Icon from '@iconify/svelte';
 	import { onMount, untrack } from 'svelte';
+	import { SvelteMap } from 'svelte/reactivity';
 
-	const DEFAULT_COLORS: ColorString[] = [
-		'#3771c8',
-		'#aa8800',
-		'#338000',
-		'#800066',
-		'#008066',
-		'#666666',
-		'#800000'
-	];
 	const fetcher = new CandleFetcher();
 
-	let schedules = $derived<Timetable[]>(fromUrlHash(page.url.hash.slice(1)));
+	let schedules = $state<Timetable[]>(fromUrlHash(page.url.hash.slice(1)));
 	let addDialogOpen = $state(false);
 
 	let mounted = $state(false);
@@ -38,6 +42,12 @@
 		history.replaceState(null, '', `#${urlHash}`);
 	});
 
+	$effect(() => {
+		if (!mounted) return;
+
+		schedules = fromUrlHash(page.url.hash.slice(1));
+	});
+
 	const calcTimetablePromise = $derived(
 		mounted
 			? getCalculatedTimetable(schedules.filter((s) => s.options.active))
@@ -45,12 +55,12 @@
 	);
 
 	function getCalculatedTimetable(schedules: Timetable[]): Promise<CalculatedTimetable> {
-		const fetchPromises = new Map<Timetable, Promise<CandleTimetable>>();
+		const fetchPromises = new SvelteMap<Timetable, Promise<CandleTimetable>>();
 		for (const schedule of schedules) {
 			fetchPromises.set(schedule, fetcher.getTimetable(schedule.type, schedule.name));
 		}
 		return Promise.allSettled(fetchPromises.values()).then((timetables) => {
-			const timetableMap = new Map<Timetable, CandleTimetable>();
+			const timetableMap = new SvelteMap<Timetable, CandleTimetable>();
 			let i = 0;
 			for (const schedule of schedules) {
 				const promiseResult = timetables[i];
@@ -100,9 +110,9 @@
 	class="flex items-center justify-start gap-4 rounded-lg border-2 border-gray-700 bg-gray-900 p-4"
 >
 	<h1 class="text-xl font-bold text-white">Rozvrhy</h1>
-	{#each schedules as schedule (schedule.name)}
+	{#each schedules as schedule, i (schedule.name)}
 		<ScheduleItem
-			{schedule}
+			bind:schedule={schedules[i]}
 			ondelete={() => {
 				schedules = schedules.filter((s) => s.name !== schedule.name);
 			}}
@@ -123,6 +133,6 @@
 	{#await calcTimetablePromise}
 		<Week />
 	{:then calculatedTimetable}
-		<Week {calculatedTimetable} />
+		<Week {calculatedTimetable} {schedules} />
 	{/await}
 </div>
